@@ -79,29 +79,21 @@ try {
     Write-Log "Error during Datadog Agent installation/check: $($_.Exception.Message)", "ERROR"
 }
 
-# --- 2. Configure main datadog.yaml for logs_enabled ---
-Write-Log "Ensuring logs_enabled is true in datadog.yaml..."
+# --- 2. Configure logs_enabled via Environment Variable ---
+Write-Log "Ensuring logs_enabled is true via system environment variable..."
 try {
-    if (-not (Test-Path $datadogYamlPath)) {
-        Write-Log "$datadogYamlPath not found. This is unexpected after agent install.", "ERROR"
-    }
-
-    $datadogYamlContent = Get-Content -Path $datadogYamlPath | Out-String
-    if ($datadogYamlContent -notmatch "logs_enabled:\s*true") {
-        # This regex ensures we only replace if it's 'false' or not present in a clean format
-        if ($datadogYamlContent -match "logs_enabled:\s*(true|false)") {
-            $datadogYamlContent = $datadogYamlContent -replace "logs_enabled:\s*(true|false)", "logs_enabled: true"
-        } else {
-            # If logs_enabled line doesn't exist, append it
-            $datadogYamlContent += "`nlogs_enabled: true`n"
-        }
-        Set-Content -Path $datadogYamlPath -Value $datadogYamlContent -Force
-        Write-Log "Set logs_enabled to true in datadog.yaml."
+    # Check if the variable is already set to 'true'
+    $currentValue = [System.Environment]::GetEnvironmentVariable("DD_LOGS_ENABLED", "Machine")
+    if ($currentValue -ne "true") {
+        Write-Log "Setting DD_LOGS_ENABLED=true as a system-wide environment variable."
+        [System.Environment]::SetEnvironmentVariable("DD_LOGS_ENABLED", "true", "Machine")
+        Write-Log "Environment variable set. A service restart is required to apply it."
+        # The restart will happen at the end of the script
     } else {
-        Write-Log "logs_enabled is already true in datadog.yaml."
+        Write-Log "DD_LOGS_ENABLED environment variable is already correctly set."
     }
 } catch {
-    Write-Log "Error configuring datadog.yaml: $($_.Exception.Message)", "ERROR"
+    Write-Log "Error setting environment variable: $($_.Exception.Message)", "ERROR"
 }
 
 # --- 3. Configure IIS Integration (only if IIS is detected) ---
