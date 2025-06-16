@@ -3,8 +3,6 @@
 # $DatadogApiKey = "MY-API-KEY-IF-TESTING-LOCALLY"
 # $DatadogSite = "datadoghq.eu"
 
-# --- Script Parameters (NinjaOne Custom Fields or hardcode for testing) ---
-# When using with NinjaOne, you can map these to custom fields (e.g., Secure Text for API Key)
 Param(
     [Parameter(Mandatory=$true)]
     [string]$DatadogApiKey,
@@ -38,7 +36,6 @@ function Write-Log {
     }
 }
 
-# --- 1. Check and Install Datadog Agent if not present ---
 Write-Log "Checking for Datadog Agent installation..."
 try {
     if (-not (Get-Service -Name $ddAgentService -ErrorAction SilentlyContinue)) {
